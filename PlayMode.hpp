@@ -36,4 +36,9 @@ struct PlayMode : Mode {
 		//camera is at player's head and will be pitched by mouse up/down motion:
 		Scene::Camera *camera = nullptr;
 	} player;
+
+	Scene::Transform *door0;
+	Scene::Transform *door1;
+	Scene::Transform *door2;
+	Scene::Transform *door3;	
 };

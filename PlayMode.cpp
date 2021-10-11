@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("myscene.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("myscene.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -39,7 +39,7 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("myscene.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
@@ -49,6 +49,25 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 	scene.transforms.emplace_back();
 	player.transform = &scene.transforms.back();
 
+	for (auto &transform : scene.transforms)
+	{
+		if (transform.name == "Door")
+			door0 = &transform;
+		else if (transform.name == "Door.001")
+			door1 = &transform;
+		else if (transform.name == "Door.002")
+			door2 = &transform;
+		else if (transform.name == "Door.003")
+			door3 = &transform;
+		else if (transform.name == "Player")
+			player.transform->position = transform.position;
+	}
+
+	assert(door0 != NULL);
+	assert(door1 != NULL);
+	assert(door2 != NULL);
+	assert(door3 != NULL);
+	
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
 	scene.cameras.emplace_back(&scene.transforms.back());
@@ -65,6 +84,14 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
+	// std::cout << "Here is player.at " << std::endl <<
+	// 	player.at.indices.x << std::endl << 
+	// 	player.at.indices.y << std::endl <<
+	// 	player.at.indices.z << std::endl << std::endl <<
+	// 	player.at.weights.x << std::endl <<
+	// 	player.at.weights.y << std::endl <<
+	// 	player.at.weights.z << std::endl << std::endl; 
+	player.transform->position = walkmesh->to_world_point(player.at);
 
 }
 
@@ -93,6 +120,37 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
+		} // open the door if the player is nearby
+		  else if (evt.key.keysym.sym == SDLK_e)
+		{
+			std::cout << "E has been pressed" << std::endl;
+ 			float min_openable_distance = 1.0f;
+			auto distance = [](glm::vec3 v1, glm::vec3 v2)
+			{
+				return sqrt(
+					pow(v1.x - v2.x, 2) +
+					pow(v1.y - v2.y, 2) +
+					pow(v1.z - v2.z, 2)
+				);
+			};
+			std::vector< Scene::Transform* > doors = {
+				door0,
+				door1,
+				door2,
+				door3
+			};
+			for (auto &d : doors)
+			{
+				std::cout << "loop over doors" << std::endl;
+				float dist = distance(walkmesh->to_world_point(player.at), d->position);
+				// std::cout << dist << std::endl;
+				if (dist < min_openable_distance)
+				{
+					std::cout << "Open the door" << std::endl;
+				}
+
+			}
+			std::cout << std::endl << std::endl;
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -173,6 +231,7 @@ void PlayMode::update(float elapsed) {
 			if (walkmesh->cross_edge(player.at, &end, &rotation)) {
 				//stepped to a new triangle:
 				player.at = end;
+				//std::cout << "player at " << player.at.x << ", " << player.at.y << ", " << player.at.z << std::endl;
 				//rotate step to follow surface:
 				remain = rotation * remain;
 			} else {
@@ -200,8 +259,11 @@ void PlayMode::update(float elapsed) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
+		// std::cout << "Before update position " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
 		//update player's position to respect walking:
 		player.transform->position = walkmesh->to_world_point(player.at);
+		// std::cout << "After update position " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
+
 
 		{ //update player's rotation to respect local (smooth) up-vector:
 			
