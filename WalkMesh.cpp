@@ -163,6 +163,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 
 	auto min = [] (glm::vec3 v)
 	{
+		// handle the case when v has nan because step_coords caused a divde-by-zero
 		if (v.x <= 0 || v.x != v.x)
 			v.x = 1000000000;
 		if (v.y <= 0 || v.y != v.y)
@@ -178,6 +179,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 			return v.z;
 	};
 	
+	// if t is nan, just make it 0
 	if (t.x != t.x)
 		t.x = 0.0f;
 	if (t.y != t.y)
@@ -187,6 +189,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 
 	time = min(t);
 
+	// clamp time to 0 and 1
 	if (time >= 1.0f)
 	{
 		time = 1.0f;
@@ -199,6 +202,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	assert(time == time);
 	end.weights = start.weights + (step_coords * time);
 	
+	// reorder the indices if needed
 	if (time != 1.0f)
 	{
 		if (end.weights.x <= 0.0001f)
@@ -230,6 +234,7 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		}
 	}
 
+	// clamp weights to avoid flying all over walkmesh
 	if (end.weights.x > 1.0f)
 		end.weights.x = 1.0f;
 	if (end.weights.y > 1.0f)
@@ -280,13 +285,11 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		assert(d.z == d.z);
 
 		glm::vec3 c1 = glm::cross(b - a, c - a);
-		// glm::vec3 c1 = glm::cross(c - b, a - b);
 		assert (c1.x == c1.x);
 		assert (c1.y == c1.y);
 		assert (c1.z == c1.z);
 		
 		glm::vec3 c2 = glm::cross(b - c, d - b);
-		// glm::vec3 c2 = glm::cross(b - d, c - d);
 		assert(c2.x == c2.x);
 		assert(c2.y == c2.y);
 		assert(c2.z == c2.z);
@@ -297,7 +300,6 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		assert(n1.z == n1.z);
 
         glm::vec3 n2 = c2 == glm::vec3(0, 0, 0) ? c2 : glm::normalize(c2);
-		//std::cout << c2.x << ", " << c2.y << ", " << c2.z << ", " << std::endl;
 		assert(n2.x == n2.x);
 		assert(n2.y == n2.y);
 		assert(n2.z == n2.z);
