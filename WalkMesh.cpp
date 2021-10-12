@@ -131,20 +131,23 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 	assert(start.weights.x == start.weights.x);
 	assert(start.weights.y == start.weights.y);
 	assert(start.weights.z == start.weights.z);
-	// std::cout << "step: " << step.x << ", " << step.y << ", " << step.z << std::endl;
 	assert(step.x == step.x);
 	assert(step.y == step.y);
 	assert(step.z == step.z);
 
+	assert (start.weights.x <= 1);
+	assert (start.weights.y <= 1);
+	assert (start.weights.z <= 1);
+	assert (start.weights.x >= 0);
+	assert (start.weights.y >= 0);
+	assert (start.weights.z >= 0);
 
     glm::vec3 const &a = vertices[start.indices.x];
 	glm::vec3 const &b = vertices[start.indices.y];
 	glm::vec3 const &c = vertices[start.indices.z];
 	
-	glm::vec3 step_coords =  barycentric_weights(a, b, c, step) - barycentric_weights(a, b, c, glm::vec3(0, 0, 0));
-	// glm::vec3 start_coords = start.weights - barycentric_weights(a, b, c, glm::vec3(0, 0, 0));
+	glm::vec3 step_coords =  barycentric_weights(a, b, c, step) - barycentric_weights(a, b, c, glm::vec3(0.0f, 0.0f, 0.0f));
 
-	
 	//if no edge is crossed, event will just be taking the whole step:
 	time = 1.0f;
 	end = start;
@@ -157,7 +160,6 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 		-start.weights.y / step_coords.y,
 		-start.weights.z / step_coords.z
 	);
-
 
 	auto min = [] (glm::vec3 v)
 	{
@@ -176,13 +178,20 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 			return v.z;
 	};
 	
+	if (t.x != t.x)
+		t.x = 0.0f;
+	if (t.y != t.y)
+		t.y = 0.0f;
+	if (t.z != t.z)
+		t.z = 0.0f;
+
 	time = min(t);
 
-	if (time > 1.0f)
+	if (time >= 1.0f)
 	{
 		time = 1.0f;
 	}
-	if (time < 0.0f)
+	if (time <= 0.0f)
 	{
 		time = 0.0f;
 	}
@@ -218,18 +227,22 @@ void WalkMesh::walk_in_triangle(WalkPoint const &start, glm::vec3 const &step, W
 				end.weights.y = 0.f;
 			if (end.weights.z <= 0)
 				end.weights.z = 0.f;
-			// std::cout << end.weights.x << ", " << end.weights.y << ", " << end.weights.z << std::endl;
-			// std::cout << "Here is the time " << time << std::endl;
-			// std::cout << "Here is the start.weights " << start.weights.x << ", " << start.weights.y << ", " << start.weights.z << std::endl;
-			// std::cout << "Here is the end.weights " << end.weights.x << ", " << end.weights.y << ", " << end.weights.z << std::endl;
-			// std::cout << "Here is the t " << t.x << ", " << t.y << ", " << t.z << std::endl;
-			//assert (end.weights.x > 0 && end.weights.y > 0 && end.weights.z > 0);
 		}
 	}
 
-	// std::cout << "Here is the time " << time << std::endl;
-	// std::cout << "Here is the start.weights " << start.weights.x << ", " << start.weights.y << ", " << start.weights.z << std::endl;
-	// std::cout << "Here is the end.weights " << end.weights.x << ", " << end.weights.y << ", " << end.weights.z << std::endl;
+	if (end.weights.x > 1.0f)
+		end.weights.x = 1.0f;
+	if (end.weights.y > 1.0f)
+		end.weights.y = 1.0f;
+	if (end.weights.z > 1.0f)
+		end.weights.z = 1.0f;
+	if (end.weights.x < 0.0f)
+		end.weights.x = 0.0f;
+	if (end.weights.y < 0.0f)
+		end.weights.y = 0.0f;
+	if (end.weights.z < 0.0f)
+		end.weights.z = 0.0f;
+
 	assert(time <= 1.00001f && 0.0f <= time);
 	return;
 }
@@ -244,7 +257,6 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 	assert(start.weights.z == 0.0f); //*must* be on an edge.
     auto v = next_vertex.find(glm::uvec2(start.indices.x, start.indices.y));
 
-	std::cout << "cross edge" << std::endl;
 	//check if 'edge' is a non-boundary edge:
 	if (v != next_vertex.end()) {
         //it is!
@@ -267,14 +279,14 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 		assert(d.y == d.y);
 		assert(d.z == d.z);
 
-		// glm::vec3 c1 = glm::cross(b - a, c - a);
-		glm::vec3 c1 = glm::cross(c - b, a - b);
+		glm::vec3 c1 = glm::cross(b - a, c - a);
+		// glm::vec3 c1 = glm::cross(c - b, a - b);
 		assert (c1.x == c1.x);
 		assert (c1.y == c1.y);
 		assert (c1.z == c1.z);
 		
-		// glm::vec3 c2 = glm::cross(b - c, d - b);
-		glm::vec3 c2 = glm::cross(b - d, c - d);
+		glm::vec3 c2 = glm::cross(b - c, d - b);
+		// glm::vec3 c2 = glm::cross(b - d, c - d);
 		assert(c2.x == c2.x);
 		assert(c2.y == c2.y);
 		assert(c2.z == c2.z);
@@ -292,14 +304,8 @@ bool WalkMesh::cross_edge(WalkPoint const &start, WalkPoint *end_, glm::quat *ro
 
         rotation = glm::rotation(n1, n2);
 
-		// std::cout << "c1: " << c1.x << ", " << c1.y << ", " << c1.z << ", " << std::endl;
-		// std::cout << "c2: " << c2.x << ", " << c2.y << ", " << c2.z << ", " << std::endl;
-		// std::cout << "n1: " << n1.x << ", " << n1.y << ", " << n1.z << ", " << std::endl;
-		// std::cout << "n2: " << n2.x << ", " << n2.y << ", " << n2.z << ", " << std::endl;
-		// std::cout << "rotation: " << rotation.x << ", " << rotation.y << ", " << rotation.z << ", " << rotation.w << std::endl;
 		return true; 
 	} else {
-		// std::cout << "second case of cross_edge" << std::endl;
 		end = start;
 		rotation = glm::quat(1.0f, 0.0f, 0.0f, 0.0f);
 		return false;

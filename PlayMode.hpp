@@ -8,6 +8,10 @@
 
 #include <vector>
 #include <deque>
+#include <map>
+#include <iostream>
+#include <fstream>
+#include <string>
 
 struct PlayMode : Mode {
 	PlayMode();
@@ -38,11 +42,7 @@ struct PlayMode : Mode {
 		Scene::Camera *camera = nullptr;
 	} player;
 
-	Scene::Transform *door0 = NULL;
-	Scene::Transform *door1 = NULL;
-	Scene::Transform *door2 = NULL;
-	Scene::Transform *door3 = NULL;	
-
 	Scene::Transform *phone0 = NULL;
-	bool is_playing_phone0 = false;
+	float time_until_kill = 0; // set in constructor
+	float t = 0;
 };

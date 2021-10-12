@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("ring.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("ring.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -39,13 +39,29 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("ring.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
 });
 
 Load< Sound::Sample > phone0sample(LoadTagDefault, []() -> Sound::Sample const * {
-	return new Sound::Sample(data_path("sounds/test.wav"));
+	return new Sound::Sample(data_path("sounds/1.wav"));
+});
+
+Load< Sound::Sample > phone1sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/2.wav"));
+});
+
+Load< Sound::Sample > phone2sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/3.wav"));
+});
+
+Load< Sound::Sample > phone3sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/4.wav"));
+});
+
+Load< Sound::Sample > phone4sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/5.wav"));
 });
 
 PlayMode::PlayMode() : scene(*phonebank_scene) {
@@ -55,28 +71,11 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	for (auto &transform : scene.transforms)
 	{
-		if (transform.name == "Door0")
-			door0 = &transform;
-		else if (transform.name == "Door1")
-			door1 = &transform;
-		else if (transform.name == "Door2")
-			door2 = &transform;
-		else if (transform.name == "Door3")
-			door3 = &transform;
-		else if (transform.name == "Player")
-			player.transform = &transform;
-		else if (transform.name == "Phone0")
+		if (transform.name == "Phone0")
 		{
 			phone0 = &transform;
 		}
 	}
-
-	std::cout << "player transform " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
-	// assert(door0 != NULL);
-	// assert(door1 != NULL);
-	// assert(door2 != NULL);
-	// assert(door3 != NULL);
-	// assert(phone0 != NULL);
 	
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -94,14 +93,75 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	//start player walking at nearest walk point:
 	player.at = walkmesh->nearest_walk_point(player.transform->position);
-	// std::cout << "Here is player.at " << std::endl <<
-	// 	player.at.indices.x << std::endl << 
-	// 	player.at.indices.y << std::endl <<
-	// 	player.at.indices.z << std::endl << std::endl <<
-	// 	player.at.weights.x << std::endl <<
-	// 	player.at.weights.y << std::endl <<
-	// 	player.at.weights.z << std::endl << std::endl; 
 	player.transform->position = walkmesh->to_world_point(player.at);
+
+	// play the phone message
+	auto play_sound = [](Load<Sound::Sample> smpl, glm::vec3 pos)
+	{
+		std::vector< float > data(smpl->data.size());
+		// PARANOIA - initialize the data vector to all zeros so that 
+		// garbade is never sent to the sound card
+		for (float &f : data)
+		{
+			f = 0.0f;
+		}
+
+		for (int j = 0; j < smpl->data.size(); j++)
+		{
+			data[j] = smpl->data[j];
+		}
+		
+		Sound::Sample *newSample = new Sound::Sample(data);
+		Sound::play_3D(*newSample, 0.5f, pos, 1.f);
+	};
+
+	{ // play phone message based on how many times the window has been
+		std::fstream myfile (data_path("gameData.txt"));
+		std::string line;
+		//std::ifstream file(data_path("gameData.txt"), std::ios::binary);
+
+		// code for reading from files inspired by https://www.w3schools.com/cpp/cpp_files.asp
+		getline (myfile, line);
+		// Output the text from the file
+		std::cout << "Phone index is " << line << std::endl;
+		if (line == "0")
+		{
+			time_until_kill = 1;//62.0f;
+			play_sound(phone0sample, phone0->position);
+			myfile.clear();
+			myfile << "1";
+		}
+		else if (line == "01")
+		{
+			time_until_kill = 1;//46.0f;
+			play_sound(phone1sample, phone0->position);
+			myfile.clear();
+			myfile << "2";
+		}	
+		else if (line == "012")
+		{
+			time_until_kill = 30.0f;
+			play_sound(phone2sample, phone0->position);
+			myfile.clear();
+			myfile << "3";
+		}
+		else if (line == "0123")
+		{
+			time_until_kill = 10.0f;
+			play_sound(phone3sample, phone0->position);
+			myfile.clear();
+			myfile << "4";
+		}
+		else
+		{
+			time_until_kill = 2.0f;
+			play_sound(phone4sample, phone0->position);
+			myfile.clear();
+		}
+	}
+
+	assert(phone0sample->data.size() > 0);
+	
 
 }
 
@@ -130,37 +190,6 @@ bool PlayMode::handle_event(SDL_Event const &evt, glm::uvec2 const &window_size)
 			down.downs += 1;
 			down.pressed = true;
 			return true;
-		} // open the door if the player is nearby
-		  else if (evt.key.keysym.sym == SDLK_e)
-		{
-			std::cout << "E has been pressed" << std::endl;
- 			float min_openable_distance = 1.0f;
-			auto distance = [](glm::vec3 v1, glm::vec3 v2)
-			{
-				return sqrt(
-					pow(v1.x - v2.x, 2) +
-					pow(v1.y - v2.y, 2) +
-					pow(v1.z - v2.z, 2)
-				);
-			};
-			std::vector< Scene::Transform* > doors = {
-				door0,
-				door1,
-				door2,
-				door3
-			};
-			for (auto &d : doors)
-			{
-				std::cout << "loop over doors" << std::endl;
-				float dist = distance(walkmesh->to_world_point(player.at), d->position);
-				// std::cout << dist << std::endl;
-				if (dist < min_openable_distance)
-				{
-					std::cout << "Open the door" << std::endl;
-				}
-
-			}
-			std::cout << std::endl << std::endl;
 		}
 	} else if (evt.type == SDL_KEYUP) {
 		if (evt.key.keysym.sym == SDLK_a) {
@@ -300,37 +329,17 @@ void PlayMode::update(float elapsed) {
 	up.downs = 0;
 	down.downs = 0;
 
-	// play the phone sound if nearby a phone
-	// auto play_sound = [](Load<Sound::Sample> smpl, glm::vec3 pos)
-	// {
-	// 	std::vector< float > data(smpl->data.size());
-	// 	// PARANOIA - initialize the data vector to all zeros so that 
-	// 	// garbade is never sent to the sound card
-	// 	for (float &f : data)
-	// 	{
-	// 		f = 0.0f;
-	// 	}
+	// make the big phone go up and down
+	float speed = 0.2f;
+	float amp = 2.0f;
+	t += elapsed;
+	phone0->position = glm::vec3(0, 0, amp * cos(M_2_PI * 2 * speed * t));
 
-	// 	for (int j = 0; j < smpl->data.size(); j++)
-	// 	{
-	// 		data[j] = smpl->data[j];
-	// 	}
-		
-	// 	Sound::Sample *newSample = new Sound::Sample(data);
-	// 	Sound::play_3D(*newSample, 0.5f, pos, 1.f);
-	// };
-
-	// float play_distance = 5;
-	// 	std::cout << "Distance : " << glm::l2Norm(player.transform->position - phone0->position) << std::endl;
-
-	// if (!is_playing_phone0 && glm::l2Norm(player.transform->position - phone0->position) < play_distance)
-	// {
-	// 	std::cout << "PLayer transform " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
-	// 	std::cout << "phone0 transform " << phone0->position.x << ", " << phone0->position.y << ", " << phone0->position.z << std::endl;
-	// 	is_playing_phone0 = true;
- 	// 	assert(phone0sample->data.size() > 0);
-	// 	play_sound(phone0sample, phone0->position);
-	// }
+	// quit the application after time_to_kill seconds
+	if (t > time_until_kill && time_until_kill > 0)
+	{
+		exit(0);
+	}
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
@@ -366,18 +375,17 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 		));
 
 
-		// walkmesh drawing code copied from professor mccann no discord
-
-		glDisable(GL_DEPTH_TEST);
-		{
-			DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
-			for (auto const &tri : walkmesh->triangles) {
-				lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-				lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-				lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
-			}
-		}
-		glEnable(GL_DEPTH_TEST);
+		// walkmesh drawing code copied from professor mccann discord
+		// glDisable(GL_DEPTH_TEST);
+		// {
+		// 	DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
+		// 	for (auto const &tri : walkmesh->triangles) {
+		// 		lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		// 		lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		// 		lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+		// 	}
+		// }
+		// glEnable(GL_DEPTH_TEST);
 
 		constexpr float H = 0.09f;
 		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
