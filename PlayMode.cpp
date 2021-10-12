@@ -123,7 +123,6 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 		// code for reading from files inspired by https://www.w3schools.com/cpp/cpp_files.asp
 		getline (myfile, line);
 		// Output the text from the file
-		std::cout << "Phone index is " << line << std::endl;
 		if (line == "0")
 		{
 			time_until_kill = 1;//62.0f;

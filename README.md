@@ -11,11 +11,12 @@ Screen Shot:
 
 How To Play:
 
-(TODO: describe the controls and (if needed) goals/strategy.)
+I'd love to chat with you. Can you please pick up the phone?
+
 
 Sources: 
 
-Door opening/closing sound https://freesound.org/people/amholma/sounds/344360/
+Door opening/closing sound https://freesound.org/people/amholma/sounds/344360/ (not used)
 
 Phone sounds from
 https://freesound.org/people/Breviceps/sounds/466832/
@@ -24,6 +25,7 @@ https://freesound.org/people/MainstreamMex/sounds/439605/
 https://freesound.org/people/martian/sounds/575853/
 
 
-
 This game was built with [NEST](NEST.md).
 
+### How to reset the game state
+Go into dist/gameData.txt and make set the text file context equal to "0"
