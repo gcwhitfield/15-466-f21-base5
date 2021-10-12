@@ -19,12 +19,19 @@
 //Includes for libSDL:
 #include <SDL.h>
 
+#include "data_path.hpp"
+
+
 //...and for c++ standard library functions:
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
 #include <memory>
 #include <algorithm>
+
+#include <iostream>
+#include <fstream>
+#include <string>
 
 #ifdef _WIN32
 extern "C" { uint32_t GetACP(); }
@@ -45,6 +52,19 @@ int main(int argc, char **argv) {
 	try {
 #endif
 
+	// ----- reset the game state -----
+	if (argc > 1)
+	{
+		if (strcmp(argv[1], "reset") == 0)
+		{
+			std::fstream f(data_path("gameData.txt"), std::ofstream::out | std::ios::trunc);
+			f.close();
+			std::fstream myfile(data_path("gameData.txt"));
+			myfile << "0";
+			exit(0);
+		}
+	}
+	
 	//------------  initialization ------------
 
 	//Initialize SDL library:

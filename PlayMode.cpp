@@ -125,14 +125,14 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 		// Output the text from the file
 		if (line == "0")
 		{
-			time_until_kill = 1;//62.0f;
+			time_until_kill = 62.0f;
 			play_sound(phone0sample, phone0->position);
 			myfile.clear();
 			myfile << "1";
 		}
 		else if (line == "01")
 		{
-			time_until_kill = 1;//46.0f;
+			time_until_kill = 46.0f;
 			play_sound(phone1sample, phone0->position);
 			myfile.clear();
 			myfile << "2";
@@ -146,7 +146,7 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 		}
 		else if (line == "0123")
 		{
-			time_until_kill = 10.0f;
+			time_until_kill = 7.0f;
 			play_sound(phone3sample, phone0->position);
 			myfile.clear();
 			myfile << "4";

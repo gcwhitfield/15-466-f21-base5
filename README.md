@@ -28,4 +28,4 @@ https://freesound.org/people/martian/sounds/575853/
 This game was built with [NEST](NEST.md).
 
 ### How to reset the game state
-Go into dist/gameData.txt and make set the text file context equal to "0"
+```./dist/game reset```
