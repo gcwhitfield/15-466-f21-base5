@@ -17,15 +17,15 @@ EXPORT_SCENE=export-scene.py
 DIST=../dist
 
 all : \
-	$(DIST)/myscene.pnct \
-	$(DIST)/myscene.w \
-	$(DIST)/myscene.scene \
+	$(DIST)/islands.pnct \
+	$(DIST)/islands.w \
+	$(DIST)/islands.scene \
 
-$(DIST)/myscene.pnct : myscene.blend $(EXPORT_MESHES)
+$(DIST)/islands.pnct : islands.blend $(EXPORT_MESHES)
 	$(BLENDER) --background --python $(EXPORT_MESHES) -- '$<':Platforms '$@'
 
-$(DIST)/myscene.scene : myscene.blend $(EXPORT_SCENE)
+$(DIST)/islands.scene : islands.blend $(EXPORT_SCENE)
 	$(BLENDER) --background --python $(EXPORT_SCENE) -- '$<':Platforms '$@'
 
-$(DIST)/myscene.w : myscene.blend $(EXPORT_WALKMESHES)
+$(DIST)/islands.w : islands.blend $(EXPORT_WALKMESHES)
 	$(BLENDER) --background --python $(EXPORT_WALKMESHES) -- '$<':WalkMeshes '$@'

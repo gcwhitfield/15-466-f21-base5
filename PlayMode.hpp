@@ -38,10 +38,11 @@ struct PlayMode : Mode {
 		Scene::Camera *camera = nullptr;
 	} player;
 
-	Scene::Transform *door0;
-	Scene::Transform *door1;
-	Scene::Transform *door2;
-	Scene::Transform *door3;	
+	Scene::Transform *door0 = NULL;
+	Scene::Transform *door1 = NULL;
+	Scene::Transform *door2 = NULL;
+	Scene::Transform *door3 = NULL;	
 
-	Scene::Transform *phone0;
+	Scene::Transform *phone0 = NULL;
+	bool is_playing_phone0 = false;
 };

@@ -55,24 +55,28 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 
 	for (auto &transform : scene.transforms)
 	{
-		if (transform.name == "Door")
+		if (transform.name == "Door0")
 			door0 = &transform;
-		else if (transform.name == "Door.001")
+		else if (transform.name == "Door1")
 			door1 = &transform;
-		else if (transform.name == "Door.002")
+		else if (transform.name == "Door2")
 			door2 = &transform;
-		else if (transform.name == "Door.003")
+		else if (transform.name == "Door3")
 			door3 = &transform;
 		else if (transform.name == "Player")
-			player.transform->position = transform.position;
+			player.transform = &transform;
 		else if (transform.name == "Phone0")
+		{
 			phone0 = &transform;
+		}
 	}
 
+	std::cout << "player transform " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
 	// assert(door0 != NULL);
 	// assert(door1 != NULL);
 	// assert(door2 != NULL);
 	// assert(door3 != NULL);
+	// assert(phone0 != NULL);
 	
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -223,7 +227,6 @@ void PlayMode::update(float elapsed) {
 			if (remain == glm::vec3(0.0f)) break;
 			WalkPoint end;
 			float time;
-			std::cout << "remain: " << remain.x << ", " << remain.y << ", " << remain.z << ", " << std::endl;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
 			if (time == 1.0f) {
@@ -297,8 +300,8 @@ void PlayMode::update(float elapsed) {
 	up.downs = 0;
 	down.downs = 0;
 
-	// // play the phone sound if nearby a phone
-	// auto play_sound = [](Load<Sound::Sample> smpl)
+	// play the phone sound if nearby a phone
+	// auto play_sound = [](Load<Sound::Sample> smpl, glm::vec3 pos)
 	// {
 	// 	std::vector< float > data(smpl->data.size());
 	// 	// PARANOIA - initialize the data vector to all zeros so that 
@@ -314,17 +317,19 @@ void PlayMode::update(float elapsed) {
 	// 	}
 		
 	// 	Sound::Sample *newSample = new Sound::Sample(data);
-	// 	Sound::play(*newSample, 0.5f, 0.5f);
+	// 	Sound::play_3D(*newSample, 0.5f, pos, 1.f);
 	// };
 
-	// float play_distance = 2;
+	// float play_distance = 5;
+	// 	std::cout << "Distance : " << glm::l2Norm(player.transform->position - phone0->position) << std::endl;
 
-	// if (glm::distance(walkmesh->to_world_point(player.at), phone0->position) < play_distance)
+	// if (!is_playing_phone0 && glm::l2Norm(player.transform->position - phone0->position) < play_distance)
 	// {
+	// 	std::cout << "PLayer transform " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
+	// 	std::cout << "phone0 transform " << phone0->position.x << ", " << phone0->position.y << ", " << phone0->position.z << std::endl;
+	// 	is_playing_phone0 = true;
  	// 	assert(phone0sample->data.size() > 0);
-	// 	play_sound(phone0sample);
-
-	// // 	Sound::play(*newSample, 0.5f, 0.5f);
+	// 	play_sound(phone0sample, phone0->position);
 	// }
 }
 
@@ -332,6 +337,7 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 	//update camera aspect ratio for drawable:
 	player.camera->aspect = float(drawable_size.x) / float(drawable_size.y);
 
+	
 	//set up light type and position for lit_color_texture_program:
 	// TODO: consider using the Light(s) in the scene to do this
 	glUseProgram(lit_color_texture_program->program);
@@ -358,6 +364,20 @@ void PlayMode::draw(glm::uvec2 const &drawable_size) {
 			0.0f, 0.0f, 1.0f, 0.0f,
 			0.0f, 0.0f, 0.0f, 1.0f
 		));
+
+
+		// walkmesh drawing code copied from professor mccann no discord
+
+		glDisable(GL_DEPTH_TEST);
+		{
+			DrawLines lines(player.camera->make_projection() * glm::mat4(player.camera->transform->make_world_to_local()));
+			for (auto const &tri : walkmesh->triangles) {
+				lines.draw(walkmesh->vertices[tri.x], walkmesh->vertices[tri.y], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+				lines.draw(walkmesh->vertices[tri.y], walkmesh->vertices[tri.z], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+				lines.draw(walkmesh->vertices[tri.z], walkmesh->vertices[tri.x], glm::u8vec4(0x88, 0x00, 0xff, 0xff));
+			}
+		}
+		glEnable(GL_DEPTH_TEST);
 
 		constexpr float H = 0.09f;
 		lines.draw_text("Mouse motion looks; WASD moves; escape ungrabs mouse",
