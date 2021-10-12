@@ -2,6 +2,7 @@
 
 #include "Scene.hpp"
 #include "WalkMesh.hpp"
+#include "Sound.hpp"
 
 #include <glm/glm.hpp>
 
@@ -41,4 +42,6 @@ struct PlayMode : Mode {
 	Scene::Transform *door1;
 	Scene::Transform *door2;
 	Scene::Transform *door3;	
+
+	Scene::Transform *phone0;
 };

@@ -15,13 +15,13 @@
 
 GLuint phonebank_meshes_for_lit_color_texture_program = 0;
 Load< MeshBuffer > phonebank_meshes(LoadTagDefault, []() -> MeshBuffer const * {
-	MeshBuffer const *ret = new MeshBuffer(data_path("myscene.pnct"));
+	MeshBuffer const *ret = new MeshBuffer(data_path("phone-bank.pnct"));
 	phonebank_meshes_for_lit_color_texture_program = ret->make_vao_for_program(lit_color_texture_program->program);
 	return ret;
 });
 
 Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
-	return new Scene(data_path("myscene.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
+	return new Scene(data_path("phone-bank.scene"), [&](Scene &scene, Scene::Transform *transform, std::string const &mesh_name){
 		Mesh const &mesh = phonebank_meshes->lookup(mesh_name);
 
 		scene.drawables.emplace_back(transform);
@@ -39,9 +39,13 @@ Load< Scene > phonebank_scene(LoadTagDefault, []() -> Scene const * {
 
 WalkMesh const *walkmesh = nullptr;
 Load< WalkMeshes > phonebank_walkmeshes(LoadTagDefault, []() -> WalkMeshes const * {
-	WalkMeshes *ret = new WalkMeshes(data_path("myscene.w"));
+	WalkMeshes *ret = new WalkMeshes(data_path("phone-bank.w"));
 	walkmesh = &ret->lookup("WalkMesh");
 	return ret;
+});
+
+Load< Sound::Sample > phone0sample(LoadTagDefault, []() -> Sound::Sample const * {
+	return new Sound::Sample(data_path("sounds/test.wav"));
 });
 
 PlayMode::PlayMode() : scene(*phonebank_scene) {
@@ -61,12 +65,14 @@ PlayMode::PlayMode() : scene(*phonebank_scene) {
 			door3 = &transform;
 		else if (transform.name == "Player")
 			player.transform->position = transform.position;
+		else if (transform.name == "Phone0")
+			phone0 = &transform;
 	}
 
-	assert(door0 != NULL);
-	assert(door1 != NULL);
-	assert(door2 != NULL);
-	assert(door3 != NULL);
+	// assert(door0 != NULL);
+	// assert(door1 != NULL);
+	// assert(door2 != NULL);
+	// assert(door3 != NULL);
 	
 	//create a player camera attached to a child of the player transform:
 	scene.transforms.emplace_back();
@@ -217,6 +223,7 @@ void PlayMode::update(float elapsed) {
 			if (remain == glm::vec3(0.0f)) break;
 			WalkPoint end;
 			float time;
+			std::cout << "remain: " << remain.x << ", " << remain.y << ", " << remain.z << ", " << std::endl;
 			walkmesh->walk_in_triangle(player.at, remain, &end, &time);
 			player.at = end;
 			if (time == 1.0f) {
@@ -259,7 +266,7 @@ void PlayMode::update(float elapsed) {
 			std::cout << "NOTE: code used full iteration budget for walking." << std::endl;
 		}
 
-		// std::cout << "Before update position " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
+		//  std::cout << "Before update position " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
 		//update player's position to respect walking:
 		player.transform->position = walkmesh->to_world_point(player.at);
 		// std::cout << "After update position " << player.transform->position.x << ", " << player.transform->position.y << ", " << player.transform->position.z << std::endl;
@@ -289,6 +296,36 @@ void PlayMode::update(float elapsed) {
 	right.downs = 0;
 	up.downs = 0;
 	down.downs = 0;
+
+	// // play the phone sound if nearby a phone
+	// auto play_sound = [](Load<Sound::Sample> smpl)
+	// {
+	// 	std::vector< float > data(smpl->data.size());
+	// 	// PARANOIA - initialize the data vector to all zeros so that 
+	// 	// garbade is never sent to the sound card
+	// 	for (float &f : data)
+	// 	{
+	// 		f = 0.0f;
+	// 	}
+
+	// 	for (int j = 0; j < smpl->data.size(); j++)
+	// 	{
+	// 		data[j] = smpl->data[j];
+	// 	}
+		
+	// 	Sound::Sample *newSample = new Sound::Sample(data);
+	// 	Sound::play(*newSample, 0.5f, 0.5f);
+	// };
+
+	// float play_distance = 2;
+
+	// if (glm::distance(walkmesh->to_world_point(player.at), phone0->position) < play_distance)
+	// {
+ 	// 	assert(phone0sample->data.size() > 0);
+	// 	play_sound(phone0sample);
+
+	// // 	Sound::play(*newSample, 0.5f, 0.5f);
+	// }
 }
 
 void PlayMode::draw(glm::uvec2 const &drawable_size) {
